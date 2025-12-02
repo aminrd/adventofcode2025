@@ -81,3 +81,51 @@ for (const r of ranges)
     total += sumInvalidIDs(r);
 
 console.log("Part one = " + total)
+
+
+function isInvalidIDPartTwo(num) {
+  const s = String(num);
+
+  // no leading zeros allowed
+  if (s[0] === '0') return false;
+
+  const n = s.length;
+
+  // Try all possible block sizes from 1 to n/2
+  for (let block = 1; block <= Math.floor(n / 2); block++) {
+    if (n % block !== 0) continue; // must divide perfectly
+
+    const repeatCount = n / block;
+    if (repeatCount < 2) continue; // must repeat at least twice
+
+    const pattern = s.slice(0, block);
+    let rebuilt = "";
+
+    // build pattern repeated repeatCount times
+    for (let i = 0; i < repeatCount; i++) {
+      rebuilt += pattern;
+    }
+
+    if (rebuilt === s) return true;
+  }
+
+  return false;
+}
+
+function sumInvalidIDsPartTwo(range) {
+  let sum = 0;
+
+  for (let n = range.start; n <= range.end; n++) {
+    if (isInvalidIDPartTwo(n)) {
+      sum += n;
+    }
+  }
+
+  return sum;
+}
+
+let totalPartTwo = 0;
+for (const r of ranges) 
+    totalPartTwo += sumInvalidIDsPartTwo(r);
+
+console.log("Part two = " + totalPartTwo);
