@@ -3,6 +3,12 @@ const args = process.argv.slice(2); // remove node and script path
 const debug = args.includes("-debug"); // true if -debug is passed
 let filename = debug ? "test.txt" : "day3.txt";
 
+function maxWithNaN(a, b) {
+    if (isNaN(a) && isNaN(b)) return NaN;   // both are NaN
+    if (isNaN(a)) return b;                 // only a is NaN
+    if (isNaN(b)) return a;                 // only b is NaN
+    return Math.max(a, b);                  // both are numbers
+}
 
 class Bank {
     constructor(line) {
@@ -21,6 +27,28 @@ class Bank {
 
         return max_found;
     }    
+
+    partTwo() {
+        const length = 12;
+        let cache = new Array(length).fill(NaN);
+        cache[0] = this.numbers[0];  
+
+        for (let i = 1; i < this.numbers.length; i++) {
+          let num = this.numbers[i];
+          let new_cache = new Array(length).fill(NaN);
+          new_cache[0] = Math.max(cache[0], num);
+
+          for(let j = 0; j < length - 1; j++){
+            if (!isNaN(cache[j]))
+              new_cache[j+1] = maxWithNaN(cache[j+1], cache[j] * 10 + num);
+          }
+
+          for (let j = 0; j < length; j++)
+            cache[j] = new_cache[j];
+        }
+
+        return cache[length - 1];
+    }     
 }
 
 function loadBanksFromFile(filename = 'input.txt') {
@@ -36,10 +64,15 @@ function loadBanksFromFile(filename = 'input.txt') {
 const banks = loadBanksFromFile(filename);
 
 
-  let totalPartOne = 0;
+let totalPartOne = 0;
+for (const bank of banks) {
+  totalPartOne += bank.partOne();
+}
+console.log('Part one = ' + totalPartOne);
 
-  for (const bank of banks) {
-      totalPartOne += bank.partOne();
-  }
 
-  console.log('Part one = ' + totalPartOne);
+let totalPartTwo = 0;
+for (const bank of banks) {
+  totalPartTwo += bank.partTwo();
+}
+console.log('Part one = ' + totalPartTwo);
