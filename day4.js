@@ -42,13 +42,42 @@ function isAccessible(x, y){
 }
 
 let partOne = 0;
+let queue = [];
+
 // loop over all cells and count accessible ones
 for (let i = 0; i < m; i++) {
   for (let j = 0; j < n; j++) {
-    if (isAccessible(i, j)) {
+    if (isAccessible(i, j)) {      
       partOne++;
+      queue.push([i, j]);
     }
   }
 }
 
 console.log("Part One:", partOne);
+
+
+let partTwo = 0;
+
+while (queue.length > 0){
+  const [x, y] = queue.shift();
+
+  if (grid[x][y] === '.')
+    continue;
+
+  if (isAccessible(x, y)){
+    partTwo++;
+    grid[x][y] = '.'; // mark as visited
+
+    // Add neighbors to the queue
+    for (const [dx, dy] of directions) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx >= 0 && nx < m && ny >= 0 && ny < n && grid[nx][ny] === '@') {
+        queue.push([nx, ny]);
+      }
+    }
+  }
+}
+
+console.log("Part Two:", partTwo);
