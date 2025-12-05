@@ -60,3 +60,26 @@ for (let id of ingredientIds) {
 }
 
 console.log("Part One:", partOne);
+
+
+// sort ranges by start
+ranges.sort((a, b) => a.start - b.start);
+
+let totalIdsInRanges = ranges[0].end - ranges[0].start + 1;
+let last_end = ranges[0].end;
+let i=1; 
+
+while (i < ranges.length) {
+    const range = ranges[i];
+    if (range.end <= last_end){
+      i++;
+      continue;
+    }
+
+    let start = Math.max(range.start, last_end + 1);
+    totalIdsInRanges += range.end - start + 1;
+    last_end = range.end;
+    i++;
+}
+
+console.log("Part Two:", totalIdsInRanges);
