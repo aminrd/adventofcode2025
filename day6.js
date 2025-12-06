@@ -1,4 +1,5 @@
 const fs = require("fs");
+const { get } = require("http");
 const args = process.argv.slice(2); // remove node and script path
 const debug = args.includes("-debug"); // true if -debug is passed
 let filename = debug ? "test.txt" : "day6.txt";
@@ -19,6 +20,39 @@ class Question {
         } else {
             throw new Error(`Unknown operation: ${this.operation}`);
         }
+    }
+
+
+    result_part_two(){
+        let result = 0;
+        if (this.operation === "*")
+            result = 1;
+        
+        // get list of numbers in string format
+        const numStrs = this.numbers.map(num => num.toString());
+
+        // get length of longest number string
+        const maxLength = Math.max(...numStrs.map(s => s.length));
+
+        for (let i = maxLength - 1; i >= 0; i--) {
+            // for each number, get the char at position or empty if out of bounds            
+            const new_num = numStrs.map(s => {   
+                return 
+            });
+
+            console.log(new_num);
+
+            // convert new_num to integer
+            const digitValue = parseInt(new_num.join(''), 10);            
+
+            if (this.operation === "+") {
+                result += digitValue;
+            } else if (this.operation === "*") {
+                result *= digitValue;
+            }
+        }
+
+        return result;
     }
 }
 
@@ -78,3 +112,73 @@ for (const question of questions) {
 
 console.log(`Part One: Sum of all question results is ${partOneSum}`);
 
+
+
+// read the file again for part two
+// read everything just raw lines
+const content = fs.readFileSync(filename, 'utf8');
+const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
+
+let partTwoSum = 0;
+let index = 0;
+let numberOfLines = lines.length;
+const last_line = lines[numberOfLines - 1];
+
+// get vertical number if not space from line 0 to last line -1 at index j
+function get_vertical_number(j_index){
+    let numStr = '';
+    for (let i = 0; i < numberOfLines - 1; i++) {
+        const ch = lines[i][j_index];
+        if (ch !== ' ')
+            numStr += ch;
+    }
+
+    if (numStr.length === 0)
+        return NaN;
+    
+    if(debug)
+        console.log(parseInt(numStr, 10));
+
+    return parseInt(numStr, 10);
+}
+
+while (index < last_line.length){
+
+    if (last_line[index] === '\n'){
+        break;
+    }
+
+    if (last_line[index] === ' '){
+        index++;
+        continue;
+    }
+
+    let operation = last_line[index];
+    if (operation !== '+' && operation !== '*'){
+        index++;
+        continue;
+    }    
+    
+    let result = get_vertical_number(index);
+    let j = index + 1;
+
+    while (j < last_line.length && last_line[j] === ' ' && last_line[j] !== '\n'){
+        let new_num = get_vertical_number(j);
+        if (isNaN(new_num)){
+            break;
+        }
+
+        if (operation === "+"){
+            result += new_num;
+        } else{
+            result *= new_num;
+        }
+        j++;
+    }
+
+    partTwoSum += result;
+    index = j;
+}
+
+
+console.log(`Part Two: Sum of all question results is ${partTwoSum}`);
