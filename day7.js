@@ -98,3 +98,48 @@ function find_total_number_of_splits(grid, m, n, s_index) {
 const partOneResult = find_total_number_of_splits(grid, m, n, s_index);
 console.log("Part One:", partOneResult);
 
+
+
+
+function find_total_number_of_pathways(grid, m, n, s_index) {
+    let board = new Array(m);
+    for (let i = 0; i < m; i++) {
+        board[i] = new Array(n).fill(0);
+    }
+
+    board[0][s_index] = 1;
+
+    const queue = [];
+
+    function isValid(i, j){
+        return i >= 0 && i < m && j >= 0 && j < n ;
+    }
+
+    for (let i = 1; i < m - 1; i++) {
+        for (let j = 0; j < n; j++){
+            if (grid[i][j] === '^'){
+                board[i][j-1] += board[i - 1][j];
+                board[i][j+1] += board[i - 1][j];
+            }
+            else{
+                board[i][j] += board[i - 1][j];
+            }
+        }
+    }
+
+
+    if (debug)
+        print_2d_array(board);
+
+    // sum of the last row
+
+    let total_paths = 0;
+    for (let j = 0; j < n; j++){
+        total_paths += board[m - 2][j];
+    }
+
+    return total_paths; 
+}
+
+const partTwoResult = find_total_number_of_pathways(grid, m, n, s_index);
+console.log("Part Two:", partTwoResult);
