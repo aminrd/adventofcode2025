@@ -117,6 +117,46 @@ function can_move(x0, y0, x1, y1, x2, y2){
     return false;
 }
 
+function segIntersect(ax, ay, bx, by, cx, cy, dx, dy) {
+    function orient(x1,y1,x2,y2,x3,y3){
+        return (x2-x1)*(y3-y1) - (y2-y1)*(x3-x1);
+    }
+
+    const o1 = orient(ax,ay,bx,by,cx,cy);
+    const o2 = orient(ax,ay,bx,by,dx,dy);
+    const o3 = orient(cx,cy,dx,dy,ax,ay);
+    const o4 = orient(cx,cy,dx,dy,bx,by);
+
+    return (o1>0 && o2<0 || o1<0 && o2>0) &&
+           (o3>0 && o4<0 || o3<0 && o4>0);
+}
+function lineEntersRect(x1,y1,x2,y2,left,right,bottom,top){
+
+    // if either endpoint is strictly inside
+    if (isInside(x1,y1,left,right,bottom,top) ||
+        isInside(x2,y2,left,right,bottom,top)) {
+        return true;
+    }
+
+    // define rectangle edges
+    const edges = [
+        [left,top, right,top],       // top
+        [left,bottom,right,bottom], // bottom
+        [left,top, left,bottom],    // left
+        [right,top,right,bottom]   // right
+    ];
+
+    // if segment intersects any edge, it enters
+    for (const e of edges) {
+        if (segIntersect(x1,y1,x2,y2, ...e)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 // Returns true if all of the points inside the rectable, are also inside the whole hull
 function CoverInsidePoints(i, j){    
     // get x, y coordinates of these points
@@ -144,6 +184,9 @@ function CoverInsidePoints(i, j){
     for (let k = 0; k < numberOfPoints; k++){        
         let [x_start, y_start] = points[(i + k) % numberOfPoints];
         let [x_end, y_end] = points[(i + k + 1) % numberOfPoints];
+
+        if (lineEntersRect(x_start, y_start, x_end, y_end, left, right, bottom, top))
+            return false;
 
         if (!can_move(x, y, x_start, y_start, x_end, y_end))
             continue;
