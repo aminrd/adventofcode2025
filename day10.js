@@ -4,6 +4,22 @@ const args = process.argv.slice(2); // remove node and script path
 const debug = args.includes("-debug"); // true if -debug is passed
 let filename = debug ? "test.txt" : "day10.txt";
 
+function array_to_key(arr) {
+    return arr.join(",");
+}
+
+// Check if two array are equal
+function arraysEqual(arr1, arr2) {
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
 
 class Machine {
     constructor(pattern, buttons, joltage) {
@@ -62,6 +78,41 @@ class Machine {
         }
         return -1;
     }
+
+    part_two_bfs(){
+        const target = this.joltage;
+        const length = this.joltage.length;
+        const start = new Array(length).fill(0);
+
+        const queue = [];
+        const visited = new Set();
+
+        queue.push([start, 0]);
+        visited.add(array_to_key(start));
+
+        let result = Infinity;
+
+        while (queue.length > 0) {
+            const [state, dist] = queue.shift();
+
+            for (const button of this.buttons){
+                let new_state = [...state];
+                
+                for(const button_index of button){
+                    new_state[button] += 1;
+                }
+
+                let new_state_key = array_to_key(new_state);                
+                if (arraysEqual(new_state, target)){
+                    result = Math.min(result, dist + 1);
+                }else if (!visited.has(new_state_key) && (dist + 1) < result){
+                    queue.push([new_state, dist + 1]);
+                }
+            }
+        }
+
+        return result;        
+    }
 }
 
 function loadMachines(filename) {
@@ -110,3 +161,10 @@ for (let i = 0 ; i < machines.length; i++){
     partOne += machines[i].part_one_bfs()
 }
 console.log("Part one = " + partOne);
+
+
+let partTwo = 0;
+for (let i = 0 ; i < machines.length; i++){
+    partTwo += machines[i].part_two_bfs()
+}
+console.log("Part two = " + partTwo);
