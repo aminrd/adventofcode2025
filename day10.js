@@ -21,6 +21,46 @@ function arraysEqual(arr1, arr2) {
   return true;
 }
 
+function copy_array(array){
+    let new_array = new Array(array.length).fill(0);
+    for(let i = 0; i < array.length; i++)
+        new_array[i] = array[i];
+    return new_array;
+}
+
+function apply_button_to_state(button, state){
+    let new_state = copy_array(state);
+
+    for (let j=0; j<button.length; j++){
+        let button_index = button[j];
+        new_state[button_index] += 1;
+    }
+
+    return new_state;
+}
+
+function is_target_smaller(target, state){
+    for(let j = 0; j < target.length; j++){
+        if(target[j] < state[j])
+            return true;
+    }
+    return false;
+}
+
+// Check if apply_button_to_array is working fine
+console.assert(
+    arraysEqual(
+        apply_button_to_state([0,2], [0,0,0,0,0]),
+        [1,0,1,0,0]
+    )
+);
+
+
+// Check if state to key is working fine
+console.assert(
+    array_to_key([1,2,3]) === "1,2,3"
+);
+
 class Machine {
     constructor(pattern, buttons, joltage) {
         this.pattern = pattern;
@@ -96,13 +136,12 @@ class Machine {
             const [state, dist] = queue.shift();
 
             for (const button of this.buttons){
-                let new_state = [...state];
+                let new_state = apply_button_to_state(button, state);
+                if(is_target_smaller(target, new_state))
+                    continue;
                 
-                for(const button_index of button){
-                    new_state[button] += 1;
-                }
-
                 let new_state_key = array_to_key(new_state);                
+
                 if (arraysEqual(new_state, target)){
                     result = Math.min(result, dist + 1);
                 }else if (!visited.has(new_state_key) && (dist + 1) < result){
