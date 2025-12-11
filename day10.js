@@ -1,5 +1,4 @@
-const fs = require("fs");
-const { get } = require("http");
+import fs from 'fs';
 const args = process.argv.slice(2); // remove node and script path
 const debug = args.includes("-debug"); // true if -debug is passed
 let filename = debug ? "test.txt" : "day10.txt";
@@ -28,12 +27,12 @@ function copy_array(array){
     return new_array;
 }
 
-function apply_button_to_state(button, state){
+function apply_button_to_state(button, state, nums){
     let new_state = copy_array(state);
 
     for (let j=0; j<button.length; j++){
         let button_index = button[j];
-        new_state[button_index] += 1;
+        new_state[button_index] += nums;
     }
 
     return new_state;
@@ -47,10 +46,34 @@ function is_target_smaller(target, state){
     return false;
 }
 
+function lower_bound(target, state){
+    let bound = 0;
+    for(let j = 0; j < target.length; j++){
+        let diff = Math.abs(target[j] - state[j]);
+        bound = Math.max(bound, diff);
+    }    
+    return bound;
+}
+console.assert(
+    lower_bound([1,2,3], [2,10,6]) === 8
+);
+
+function min_diff(button, state, target){
+    let diff = Infinity;
+    for (let j=0; j<button.length; j++){
+        let button_index = button[j];
+        diff = Math.min(diff, target[button_index] - state[button_index]);
+    }
+    return diff;
+}
+console.assert(
+    min_diff([1,3], [0,1,0,0,0], [5,5,5,5,5]) === 4
+);
+
 // Check if apply_button_to_array is working fine
 console.assert(
     arraysEqual(
-        apply_button_to_state([0,2], [0,0,0,0,0]),
+        apply_button_to_state([0,2], [0,0,0,0,0], 1),
         [1,0,1,0,0]
     )
 );
@@ -60,6 +83,20 @@ console.assert(
 console.assert(
     array_to_key([1,2,3]) === "1,2,3"
 );
+
+function make2D(rows, cols) {
+    return Array.from({length: rows}, () => Array(cols).fill(0));
+}
+
+const createRangeArray = (start, end) => {
+  if (start > end) {
+    // Handle cases where start is greater than end, e.g., return an empty array or throw an error.
+    return []; 
+  }
+  const length = end - start + 1;
+  return Array.from({ length: length }, (_, index) => start + index);
+};
+
 
 class Machine {
     constructor(pattern, buttons, joltage) {
@@ -119,37 +156,78 @@ class Machine {
         return -1;
     }
 
-    part_two_bfs(){
+    part_two_dfs(){
         const target = this.joltage;
+        const n = target.length;
         const length = this.joltage.length;
         const start = new Array(length).fill(0);
 
-        const queue = [];
-        const visited = new Set();
-
-        queue.push([start, 0]);
-        visited.add(array_to_key(start));
-
-        let result = Infinity;
-
-        while (queue.length > 0) {
-            const [state, dist] = queue.shift();
-
-            for (const button of this.buttons){
-                let new_state = apply_button_to_state(button, state);
-                if(is_target_smaller(target, new_state))
-                    continue;
-                
-                let new_state_key = array_to_key(new_state);                
-
-                if (arraysEqual(new_state, target)){
-                    result = Math.min(result, dist + 1);
-                }else if (!visited.has(new_state_key) && (dist + 1) < result){
-                    queue.push([new_state, dist + 1]);
-                }
+        let mat = make2D(n, this.buttons.length);
+        for(let i = 0; i < this.buttons.length; i++){
+            let button = this.buttons[i];
+            for(let j = 0; j < button.length; j++){
+                mat[button[j]][i] = 1;
             }
         }
 
+        // Sort buttons descending by size
+        this.buttons.sort((a, b) => b.length - a.length);
+        let result = Infinity;        
+
+        let max_possible = Math.max(...target);
+        console.log(max_possible);
+         
+        function dfs(state, dist, buttons, b_index)
+        {
+            if(arraysEqual(state, target)){
+                result = Math.min(result, dist);
+                return;
+            }
+
+            if (dist > max_possible)
+                return;
+
+            if(b_index >= buttons.length){
+                return;
+            }
+            
+            if((dist + lower_bound(target, state)) >= result){
+                return;
+            }
+
+            const button = buttons[b_index];
+            const button_diff = min_diff(button, state, target);
+
+            if (button_diff < 0){
+                console.log("Warning : possible mistake here when button_diff is negative!");
+                return;
+            }
+
+            // Try 0 times of this button first
+            dfs(state, dist, buttons, b_index + 1);
+
+            if(button_diff === 0)
+                return;
+
+            const initial_sate = copy_array(state);
+            let new_state = apply_button_to_state(button, initial_sate, button_diff);
+            dfs(new_state, dist + button_diff, buttons, b_index+1);
+
+            let steps = createRangeArray(1, button_diff - 1);
+
+            while(steps.length > 0){
+                const randomIndex = Math.floor(Math.random() * steps.length);
+                const step = steps.splice(randomIndex, 1)[0];              
+                new_state = apply_button_to_state(button, initial_sate, step);
+                dfs(new_state, dist + step, buttons, b_index+1);                                
+            }
+        }
+
+        while(max_possible < 500 && result === Infinity){
+            dfs(start, 0, this.buttons, 0);
+            max_possible += 50;
+            console.log('Increasing maximum possible distance to ' + max_possible)            
+        }
         return result;        
     }
 }
@@ -204,6 +282,9 @@ console.log("Part one = " + partOne);
 
 let partTwo = 0;
 for (let i = 0 ; i < machines.length; i++){
-    partTwo += machines[i].part_two_bfs()
+    let matchine_result =  machines[i].part_two_dfs()
+    console.log("Finished " + i + " machine out of " + machines.length + " current result = " + matchine_result);
+
+    partTwo += matchine_result;
 }
 console.log("Part two = " + partTwo);
