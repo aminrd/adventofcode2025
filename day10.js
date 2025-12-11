@@ -1,4 +1,5 @@
 import fs from 'fs';
+import solver from 'javascript-lp-solver';
 const args = process.argv.slice(2); // remove node and script path
 const debug = args.includes("-debug"); // true if -debug is passed
 let filename = debug ? "test.txt" : "day10.txt";
@@ -156,6 +157,55 @@ class Machine {
         return -1;
     }
 
+    part_two_linear_programmign(){
+        let buttons = this.buttons;
+        let joltage = this.joltage;
+
+        // Create the constraints
+        let constraints = {};
+        for (let i = 0; i < joltage.length; i++) {
+            let constraint = {};
+            for (let j = 0; j < buttons.length; j++) {
+                constraint['x' + j] = buttons[j].includes(i) ? 1 : 0;
+            }
+            constraints['c' + i] = { equal: joltage[i], ...constraint };
+        }
+
+        // Define integer variables
+        let ints = {};
+        for (let j = 0; j < buttons.length; j++) {
+            ints['x' + j] = 1;
+        }
+
+        // Objective: minimize sum of buttons
+        let model = {
+            optimize: "total",
+            opType: "min",
+            constraints: {},
+            variables: {},
+            ints: {}
+        };
+
+        // Build variables and constraints
+        for (let j = 0; j < buttons.length; j++) {
+            let varObj = { total: 1 }; // coefficient in objective
+            for (let i = 0; i < joltage.length; i++) {
+                varObj['c' + i] = buttons[j].includes(i) ? 1 : 0;
+            }
+            model.variables['x' + j] = varObj;
+            model.ints['x' + j] = 1;
+        }
+
+        // Add constraints for each joltage
+        for (let i = 0; i < joltage.length; i++) {
+            model.constraints['c' + i] = { equal: joltage[i] };
+        }
+
+        // Solve
+        let solution = solver.Solve(model);
+        return solution.result;
+    }
+
     part_two_dfs(){
         const target = this.joltage;
         const n = target.length;
@@ -282,7 +332,7 @@ console.log("Part one = " + partOne);
 
 let partTwo = 0;
 for (let i = 0 ; i < machines.length; i++){
-    let matchine_result =  machines[i].part_two_dfs()
+    let matchine_result =  machines[i].part_two_linear_programmign()
     console.log("Finished " + i + " machine out of " + machines.length + " current result = " + matchine_result);
 
     partTwo += matchine_result;
